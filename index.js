@@ -85,15 +85,24 @@ const getWebpackResolveRules = function(webpackConfig) {
 
 const resolveRules = getWebpackResolveRules(webpackConfig);
 
+const resolver = ResolverFactory.createResolver(
+  Object.assign(
+    {
+      fileSystem: require("fs"),
+      useSyncFileSystemCalls: true
+    },
+    resolveRules
+  )
+);
+
+const cache = {};
+
 module.exports = function(value, options) {
-  const resolver = ResolverFactory.createResolver(
-    Object.assign(
-      {
-        fileSystem: require("fs"),
-        useSyncFileSystemCalls: true
-      },
-      resolveRules
-    )
-  );
-  return resolver.resolveSync({}, options.basedir, value);
+  const key = options.basedir + value;
+
+  if (!cache[key]) {
+    cache[key] = resolver.resolveSync({}, options.basedir, value);
+  }
+
+  return cache[key];
 };
